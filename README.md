@@ -1,4 +1,4 @@
-# fanfou-stream ![](https://img.shields.io/badge/status-WIP-brightgreen.svg)
+# fanfou-streamer ![](https://img.shields.io/badge/status-WIP-brightgreen.svg)
 
 Fanfou Streaming SDK for Node.js
 
