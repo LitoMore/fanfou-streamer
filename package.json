@@ -18,5 +18,8 @@
   "homepage": "https://github.com/LitoMore/fanfou-streamer#readme",
   "dependencies": {
     "fanfou-sdk": "^2.1.10"
+  },
+  "devDependencies": {
+    "standard": "^10.0.3"
   }
 }
