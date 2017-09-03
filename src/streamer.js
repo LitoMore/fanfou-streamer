@@ -39,9 +39,14 @@ class Stream extends EventEmitter {
     if (this.isStreaming) {
       return false
     }
-    this.streamHandle = request(this.getReqOptions(streamApiUser, null, 'post'))
-    this._addEventListners()
-    this.getUser()
+    this.getUser(err => {
+      if (!err) {
+        this.streamHandle = request(this.getReqOptions(streamApiUser, null, 'post'))
+        this._addEventListners()
+      } else {
+        console.error('failed to fectch user info', err)
+      }
+    })
   }
 
   _stop () {
@@ -51,14 +56,15 @@ class Stream extends EventEmitter {
     if (this.heartbeatTimeoutHandle) clearTimeout(this.heartbeatTimeoutHandle)
   }
 
-  getUser () {
+  getUser (callback) {
     request(this.getReqOptions(apiCredentials), (err, httpResponse, body) => {
       if (err) return false
       if (httpResponse.statusCode !== 200) return false
       try {
         this.user = JSON.parse(body)
+        if (typeof callback === 'function') callback(null)
       } catch (err) {
-        //
+        if (typeof callback === 'function') callback(err)
       }
     })
   }
