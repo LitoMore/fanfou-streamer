@@ -21,7 +21,7 @@ const TYPE_EVENT_MESSAGE_REPOST = 'message.repost'
 // const TYPE_EVENT_FAV_DELETE = 'fav.delete'
 
 class Stream extends EventEmitter {
-  constructor (fanfouSdkInstance) {
+  constructor (fanfouSdkInstance, options = {}) {
     if (!fanfouSdkInstance) {
       throw new Error('Need fanfou SDK Instance to proceed')
     }
@@ -30,7 +30,9 @@ class Stream extends EventEmitter {
     this.user = null
     this.isStreaming = false
     this.streamHandle = null
+    this.heartbeatTimeoutDuration = 40 * 1000
     this.heartbeatTimeoutHandle = null
+    this.autoReconnect = (typeof options.autoReconnect === 'boolean') ? options.autoReconnect : true
     this.chunk = ''
     this._start()
   }
@@ -100,9 +102,14 @@ class Stream extends EventEmitter {
     if (this.heartbeatTimeoutHandle) clearTimeout(this.heartbeatTimeoutHandle)
     this.heartbeatTimeoutHandle = null
     this.heartbeatTimeoutHandle = setTimeout(() => {
+      console.log(`heartbeat timed out for ${this.user.id}, stopping...`)
       this.isStreaming = false
       this._stop()
-    }, 60 * 1000)
+      if (this.autoReconnect === true) {
+        console.log(`auto reconnecting for ${this.user.id}...`)
+        this._start()
+      }
+    }, this.heartbeatTimeoutDuration)
   }
 
   _handleImData (chunk) {
