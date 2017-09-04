@@ -21,12 +21,12 @@ const TYPE_EVENT_MESSAGE_REPOST = 'message.repost'
 // const TYPE_EVENT_FAV_DELETE = 'fav.delete'
 
 class Stream extends EventEmitter {
-  constructor (fanfouSdkInstance, options = {}) {
-    if (!fanfouSdkInstance) {
-      throw new Error('Need fanfou SDK Instance to proceed')
+  constructor (oauth, options = {}) {
+    if (!oauth) {
+      throw new Error('Need OAuth to proceed')
     }
     super()
-    this.ff = fanfouSdkInstance
+    this.oauth = oauth
     this.user = null
     this.isStreaming = false
     this.streamHandle = null
@@ -35,10 +35,9 @@ class Stream extends EventEmitter {
     this.heartbeatTimeoutHandle = null
     this.autoReconnect = (typeof options.autoReconnect === 'boolean') ? options.autoReconnect : true
     this.chunk = ''
-    this._start()
   }
 
-  _start () {
+  start () {
     if (this.isStreaming) {
       return false
     }
@@ -52,7 +51,7 @@ class Stream extends EventEmitter {
     })
   }
 
-  _stop () {
+  stop () {
     // console.log(`stopping streamer for ${this.user.id}`)
     this.responseHandle.destroy()
     this.responseHandle = null
@@ -88,6 +87,7 @@ class Stream extends EventEmitter {
     if (this.responseHandle.statusCode === 200) {
       this.isStreaming = true
       this.renewHeartbeatTimeout()
+      this.emit('connected')
     }
     this.responseHandle.setEncoding('utf8')
     // "Im" for IncomingMessage
@@ -100,19 +100,19 @@ class Stream extends EventEmitter {
 
   _handleRqError (args) {
     // console.error(`RQ error for ${this.user.id}`, args)
-    this.isStreaming = false
+    this._setDisconnected()
   }
 
   renewHeartbeatTimeout () {
     if (this.heartbeatTimeoutHandle) clearTimeout(this.heartbeatTimeoutHandle)
     this.heartbeatTimeoutHandle = null
     this.heartbeatTimeoutHandle = setTimeout(() => {
-      console.log(`heartbeat timed out for ${this.user.id}, stopping...`)
+      // console.log(`heartbeat timed out for ${this.user.id}, stopping...`)
       this.isStreaming = false
-      this._stop()
+      this.stop()
       if (this.autoReconnect === true) {
-        console.log(`auto reconnecting for ${this.user.id}...`)
-        this._start()
+        // console.log(`auto reconnecting for ${this.user.id}...`)
+        this.start()
       }
     }, this.heartbeatTimeoutDuration)
   }
@@ -146,27 +146,27 @@ class Stream extends EventEmitter {
   }
 
   _handleImAborted () {
-    this.isStreaming = false
+    this._setDisconnected()
   }
 
   _handleImClose () {
-    this.isStreaming = false
+    this._setDisconnected()
   }
 
   _handleImEnd () {
-    this.isStreaming = false
+    this._setDisconnected()
   }
 
   _handleImError (args) {
-    this.isStreaming = false
+    this._setDisconnected()
   }
 
   getReqOptions (uri, args = {}, method = 'get') {
     const oauth = {
-      consumer_key: this.ff.consumer_key,
-      consumer_secret: this.ff.consumer_secret,
-      token: this.ff.oauth_token,
-      token_secret: this.ff.oauth_token_secret
+      consumer_key: this.oauth.consumerKey,
+      consumer_secret: this.oauth.consumerSecret,
+      token: this.oauth.oauthToken,
+      token_secret: this.oauth.oauthTokenSecret
     }
     let options = {
       uri,
@@ -207,6 +207,11 @@ class Stream extends EventEmitter {
     } else {
       return rawObj.event
     }
+  }
+
+  _setDisconnected () {
+    this.isStreaming = false
+    this.emit('disconnected')
   }
 }
 
