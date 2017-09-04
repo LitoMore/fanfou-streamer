@@ -30,6 +30,7 @@ class Stream extends EventEmitter {
     this.user = null
     this.isStreaming = false
     this.streamHandle = null
+    this.responseHandle = null
     this.heartbeatTimeoutDuration = 40 * 1000
     this.heartbeatTimeoutHandle = null
     this.autoReconnect = (typeof options.autoReconnect === 'boolean') ? options.autoReconnect : true
@@ -53,6 +54,8 @@ class Stream extends EventEmitter {
 
   _stop () {
     console.log(`stopping streamer for ${this.user.id}`)
+    this.responseHandle.destroy()
+    this.responseHandle = null
     this.streamHandle.destroy()
     this.streamHandle = null
     if (this.heartbeatTimeoutHandle) clearTimeout(this.heartbeatTimeoutHandle)
@@ -81,16 +84,18 @@ class Stream extends EventEmitter {
 
   _handleRqResponse (response) {
     console.log(`stream request got response for ${this.user.id}, code `, response.statusCode)
-    if (response.statusCode === 200) {
+    this.responseHandle = response
+    if (this.responseHandle.statusCode === 200) {
       this.isStreaming = true
       this.renewHeartbeatTimeout()
     }
-    response.setEncoding('utf8')
-    response.on('data', this._handleImData.bind(this))
-    response.on('aborted', this._handleImAborted.bind(this))
-    response.on('close', this._handleImClose.bind(this))
-    response.on('end', this._handleImEnd.bind(this))
-    response.on('error', this._handleImError.bind(this))
+    this.responseHandle.setEncoding('utf8')
+    // "Im" for IncomingMessage
+    this.responseHandle.on('data', this._handleImData.bind(this))
+    this.responseHandle.on('aborted', this._handleImAborted.bind(this))
+    this.responseHandle.on('close', this._handleImClose.bind(this))
+    this.responseHandle.on('end', this._handleImEnd.bind(this))
+    this.responseHandle.on('error', this._handleImError.bind(this))
   }
 
   _handleRqError (args) {
@@ -132,7 +137,7 @@ class Stream extends EventEmitter {
           console.log(`new event for ${this.user.id}, type `, type, rawObj.object.text)
           this.emit(type, rawObj)
         } catch (e) {
-          console.log(`new garbaged for ${this.user.id}, the cause was `, e.toString(), this.chunk)
+          console.log(`new garbaged for ${this.user.id}, the cause was `, e.toString(), json)
           this.emit('garbage', this.chunk)
         }
         this.chunk = ''
@@ -140,18 +145,18 @@ class Stream extends EventEmitter {
     }
   }
 
-  _handleImAborted (args) {
-    console.log(`IM aborted for ${this.user.id}`, args)
+  _handleImAborted () {
+    console.log(`IM aborted for ${this.user.id}`)
     this.isStreaming = false
   }
 
-  _handleImClose (args) {
-    console.log(`IM close for ${this.user.id}`, args)
+  _handleImClose () {
+    console.log(`IM close for ${this.user.id}`)
     this.isStreaming = false
   }
 
-  _handleImEnd (args) {
-    console.log(`IM end for ${this.user.id}`, args)
+  _handleImEnd () {
+    console.log(`IM end for ${this.user.id}`)
     this.isStreaming = false
   }
 
