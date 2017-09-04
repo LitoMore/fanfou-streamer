@@ -1,5 +1,6 @@
 # fanfou-streamer
 
+[![](https://img.shields.io/travis/LitoMore/fanfou-streamer/master.svg)](https://travis-ci.org/LitoMore/fanfou-streamer)
 [![](https://img.shields.io/npm/v/fanfou-streamer.svg)](https://www.npmjs.com/package/fanfou-streamer)
 [![](https://img.shields.io/npm/l/fanfou-streamer.svg)](https://github.com/LitoMore/fanfou-streamer/blob/master/LICENSE)
 [![](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
