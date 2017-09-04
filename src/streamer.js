@@ -21,12 +21,12 @@ const TYPE_EVENT_MESSAGE_REPOST = 'message.repost'
 // const TYPE_EVENT_FAV_DELETE = 'fav.delete'
 
 class Stream extends EventEmitter {
-  constructor (fanfouSdkInstance, options = {}) {
-    if (!fanfouSdkInstance) {
-      throw new Error('Need fanfou SDK Instance to proceed')
+  constructor (oauth, options = {}) {
+    if (!oauth) {
+      throw new Error('Need OAuth to proceed')
     }
     super()
-    this.ff = fanfouSdkInstance
+    this.oauth = oauth
     this.user = null
     this.isStreaming = false
     this.streamHandle = null
@@ -35,10 +35,9 @@ class Stream extends EventEmitter {
     this.heartbeatTimeoutHandle = null
     this.autoReconnect = (typeof options.autoReconnect === 'boolean') ? options.autoReconnect : true
     this.chunk = ''
-    this._start()
   }
 
-  _start () {
+  start () {
     if (this.isStreaming) {
       return false
     }
@@ -47,13 +46,13 @@ class Stream extends EventEmitter {
         this.streamHandle = request(this.getReqOptions(streamApiUser, null, 'post'))
         this._addEventListners()
       } else {
-        console.error('failed to fectch user info', err)
+        // console.error('failed to fectch user info', err)
       }
     })
   }
 
-  _stop () {
-    console.log(`stopping streamer for ${this.user.id}`)
+  stop () {
+    // console.log(`stopping streamer for ${this.user.id}`)
     this.responseHandle.destroy()
     this.responseHandle = null
     this.streamHandle.destroy()
@@ -83,11 +82,12 @@ class Stream extends EventEmitter {
   }
 
   _handleRqResponse (response) {
-    console.log(`stream request got response for ${this.user.id}, code `, response.statusCode)
+    // console.log(`stream request got response for ${this.user.id}, code `, response.statusCode)
     this.responseHandle = response
     if (this.responseHandle.statusCode === 200) {
       this.isStreaming = true
       this.renewHeartbeatTimeout()
+      this.emit('connected')
     }
     this.responseHandle.setEncoding('utf8')
     // "Im" for IncomingMessage
@@ -99,20 +99,20 @@ class Stream extends EventEmitter {
   }
 
   _handleRqError (args) {
-    console.error(`RQ error for ${this.user.id}`, args)
-    this.isStreaming = false
+    // console.error(`RQ error for ${this.user.id}`, args)
+    this._setDisconnected()
   }
 
   renewHeartbeatTimeout () {
     if (this.heartbeatTimeoutHandle) clearTimeout(this.heartbeatTimeoutHandle)
     this.heartbeatTimeoutHandle = null
     this.heartbeatTimeoutHandle = setTimeout(() => {
-      console.log(`heartbeat timed out for ${this.user.id}, stopping...`)
+      // console.log(`heartbeat timed out for ${this.user.id}, stopping...`)
       this.isStreaming = false
-      this._stop()
+      this.stop()
       if (this.autoReconnect === true) {
-        console.log(`auto reconnecting for ${this.user.id}...`)
-        this._start()
+        // console.log(`auto reconnecting for ${this.user.id}...`)
+        this.start()
       }
     }, this.heartbeatTimeoutDuration)
   }
@@ -120,7 +120,7 @@ class Stream extends EventEmitter {
   _handleImData (chunk) {
     this.chunk += chunk.toString('utf8')
     if (this.chunk === '\r\n') {
-      console.log(`heartbeat for ${this.user.id}`, new Date())
+      // console.log(`heartbeat for ${this.user.id}`, new Date())
       // normal interval is 20s
       this.renewHeartbeatTimeout()
       this.emit('heartbeat')
@@ -134,10 +134,10 @@ class Stream extends EventEmitter {
         try {
           let rawObj = JSON.parse(json)
           let type = this.getType(rawObj)
-          console.log(`new event for ${this.user.id}, type `, type, rawObj.object.text)
+          // console.log(`new event for ${this.user.id}, type `, type, rawObj.object.text)
           this.emit(type, rawObj)
         } catch (e) {
-          console.log(`new garbaged for ${this.user.id}, the cause was `, e.toString(), json)
+          // console.log(`new garbaged for ${this.user.id}, the cause was `, e.toString(), json)
           this.emit('garbage', this.chunk)
         }
         this.chunk = ''
@@ -146,31 +146,27 @@ class Stream extends EventEmitter {
   }
 
   _handleImAborted () {
-    console.log(`IM aborted for ${this.user.id}`)
-    this.isStreaming = false
+    this._setDisconnected()
   }
 
   _handleImClose () {
-    console.log(`IM close for ${this.user.id}`)
-    this.isStreaming = false
+    this._setDisconnected()
   }
 
   _handleImEnd () {
-    console.log(`IM end for ${this.user.id}`)
-    this.isStreaming = false
+    this._setDisconnected()
   }
 
   _handleImError (args) {
-    console.log(`IM error for ${this.user.id}`, args)
-    this.isStreaming = false
+    this._setDisconnected()
   }
 
   getReqOptions (uri, args = {}, method = 'get') {
     const oauth = {
-      consumer_key: this.ff.consumer_key,
-      consumer_secret: this.ff.consumer_secret,
-      token: this.ff.oauth_token,
-      token_secret: this.ff.oauth_token_secret
+      consumer_key: this.oauth.consumerKey,
+      consumer_secret: this.oauth.consumerSecret,
+      token: this.oauth.oauthToken,
+      token_secret: this.oauth.oauthTokenSecret
     }
     let options = {
       uri,
@@ -197,7 +193,7 @@ class Stream extends EventEmitter {
     if (!rawObj.event) return TYPE_EVENT_GARBAGE
     if (rawObj.event === TYPE_EVENT_MESSAGE_CREATE) {
       if (rawObj.source.id !== this.user.id) {
-        // mentioned,  or replied by other user
+        // mentioned, or replied by other user
         if (rawObj.object.in_reply_to_user_id === this.user.id) {
           return TYPE_EVENT_MESSAGE_REPLY
         } else if (rawObj.object.repost_status_id && rawObj.object.repost_user_id === this.user.id) {
@@ -211,6 +207,11 @@ class Stream extends EventEmitter {
     } else {
       return rawObj.event
     }
+  }
+
+  _setDisconnected () {
+    this.isStreaming = false
+    this.emit('disconnected')
   }
 }
 
