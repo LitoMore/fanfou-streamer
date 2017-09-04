@@ -47,13 +47,13 @@ class Stream extends EventEmitter {
         this.streamHandle = request(this.getReqOptions(streamApiUser, null, 'post'))
         this._addEventListners()
       } else {
-        console.error('failed to fectch user info', err)
+        // console.error('failed to fectch user info', err)
       }
     })
   }
 
   _stop () {
-    console.log(`stopping streamer for ${this.user.id}`)
+    // console.log(`stopping streamer for ${this.user.id}`)
     this.responseHandle.destroy()
     this.responseHandle = null
     this.streamHandle.destroy()
@@ -83,7 +83,7 @@ class Stream extends EventEmitter {
   }
 
   _handleRqResponse (response) {
-    console.log(`stream request got response for ${this.user.id}, code `, response.statusCode)
+    // console.log(`stream request got response for ${this.user.id}, code `, response.statusCode)
     this.responseHandle = response
     if (this.responseHandle.statusCode === 200) {
       this.isStreaming = true
@@ -99,7 +99,7 @@ class Stream extends EventEmitter {
   }
 
   _handleRqError (args) {
-    console.error(`RQ error for ${this.user.id}`, args)
+    // console.error(`RQ error for ${this.user.id}`, args)
     this.isStreaming = false
   }
 
@@ -120,7 +120,7 @@ class Stream extends EventEmitter {
   _handleImData (chunk) {
     this.chunk += chunk.toString('utf8')
     if (this.chunk === '\r\n') {
-      console.log(`heartbeat for ${this.user.id}`, new Date())
+      // console.log(`heartbeat for ${this.user.id}`, new Date())
       // normal interval is 20s
       this.renewHeartbeatTimeout()
       this.emit('heartbeat')
@@ -134,10 +134,10 @@ class Stream extends EventEmitter {
         try {
           let rawObj = JSON.parse(json)
           let type = this.getType(rawObj)
-          console.log(`new event for ${this.user.id}, type `, type, rawObj.object.text)
+          // console.log(`new event for ${this.user.id}, type `, type, rawObj.object.text)
           this.emit(type, rawObj)
         } catch (e) {
-          console.log(`new garbaged for ${this.user.id}, the cause was `, e.toString(), json)
+          // console.log(`new garbaged for ${this.user.id}, the cause was `, e.toString(), json)
           this.emit('garbage', this.chunk)
         }
         this.chunk = ''
@@ -146,22 +146,18 @@ class Stream extends EventEmitter {
   }
 
   _handleImAborted () {
-    console.log(`IM aborted for ${this.user.id}`)
     this.isStreaming = false
   }
 
   _handleImClose () {
-    console.log(`IM close for ${this.user.id}`)
     this.isStreaming = false
   }
 
   _handleImEnd () {
-    console.log(`IM end for ${this.user.id}`)
     this.isStreaming = false
   }
 
   _handleImError (args) {
-    console.log(`IM error for ${this.user.id}`, args)
     this.isStreaming = false
   }
 
@@ -197,7 +193,7 @@ class Stream extends EventEmitter {
     if (!rawObj.event) return TYPE_EVENT_GARBAGE
     if (rawObj.event === TYPE_EVENT_MESSAGE_CREATE) {
       if (rawObj.source.id !== this.user.id) {
-        // mentioned,  or replied by other user
+        // mentioned, or replied by other user
         if (rawObj.object.in_reply_to_user_id === this.user.id) {
           return TYPE_EVENT_MESSAGE_REPLY
         } else if (rawObj.object.repost_status_id && rawObj.object.repost_user_id === this.user.id) {
