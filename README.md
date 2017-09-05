@@ -25,9 +25,12 @@ const streamer = new Streamer({
   oauthTokenSecret: ''
 })
 
+streamer.start()
+
 streamer.on('message.reply', data => {
   console.log(data)
 })
+
 streamer.on('message.mention', data => {
   console.log(data)
 })
