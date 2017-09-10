@@ -36,6 +36,8 @@ streamer.on('message.mention', data => {
 })
 ```
 
+For the `data` structures of these events respectively please refer to the Fanfou [Streaming API](http://wiki.fanfou.com/Streaming-API) docs.
+
 ## Events
 
 - `message.create`
