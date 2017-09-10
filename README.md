@@ -36,6 +36,39 @@ streamer.on('message.mention', data => {
 })
 ```
 
+## Events
+
+- `message.create`
+- `message.delete`
+- `message.replied`
+- `message.mentioned`
+- `user.updateprofile`
+- `friends.create`
+- `friends.delete`
+- `friends.request`
+- `fav.create`
+- `fav.delete`
+
+## API
+
+### `streamer.start()`
+
+Start streaming.
+
+### `streamer.stop()`
+
+Stop streaming.
+
+### `streamer.on(eventName, listener)`
+
+Example:
+
+```javascript
+streamer.on('message.reply', data => {
+  console.log(data)
+})
+```
+
 ## Related
 
 - [fanfou-sdk](https://github.com/LitoMore/fanfou-sdk-node) - Fanfou SDK for Node.js
