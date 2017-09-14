@@ -75,6 +75,7 @@ streamer.on('message.reply', data => {
 
 - [fanfou-sdk](https://github.com/LitoMore/fanfou-sdk-node) - Fanfou SDK for Node.js
 - [maofan-apn](https://github.com/LitoMore/maofan-apn) - APN service for Maofan
+- [fanfou-desktop-notifier](https://github.com/LitoMore/fanfou-desktop-notifier) - Fanfou notifier for desktop
 
 ## License
 
