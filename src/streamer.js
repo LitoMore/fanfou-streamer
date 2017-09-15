@@ -181,8 +181,8 @@ class Stream extends EventEmitter {
     /*
      * message.create
      * message.delete
-     * message.replied
-     * message.mentioned
+     * message.reply
+     * message.mention
      * user.updateprofile
      * friends.create
      * friends.delete
