@@ -208,13 +208,11 @@ class Stream extends EventEmitter {
         return TYPE_EVENT_MESSAGE_CREATE
       }
     } else if (rawObj.event === TYPE_EVENT_FAV_CREATE || rawObj.event === TYPE_EVENT_FAV_DELETE) {
-      // process fav events
-      // ref https://github.com/LitoMore/fanfou-streamer/issues/2
       if (rawObj.object.user && rawObj.object.user.id === this.user.id) {
-        // fav create or delete by current user on his own message
+        // fav create/delete events on current user's message
         return rawObj.event
       } else {
-        // none of above
+        // ignore all other types of favs
         return TYPE_EVENT_GARBAGE
       }
     } else {
