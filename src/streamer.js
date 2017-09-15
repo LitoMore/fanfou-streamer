@@ -17,8 +17,8 @@ const TYPE_EVENT_MESSAGE_REPOST = 'message.repost'
 // const TYPE_EVENT_FRIENDS_CREATE = 'friends.create'
 // const TYPE_EVENT_FRIENDS_DELETE = 'friends.delete'
 // const TYPE_EVENT_FRIENDS_REQUEST = 'friends.request'
-// const TYPE_EVENT_FAV_CREATE = 'fav.create'
-// const TYPE_EVENT_FAV_DELETE = 'fav.delete'
+const TYPE_EVENT_FAV_CREATE = 'fav.create'
+const TYPE_EVENT_FAV_DELETE = 'fav.delete'
 
 class Stream extends EventEmitter {
   constructor (oauth, options = {}) {
@@ -181,8 +181,8 @@ class Stream extends EventEmitter {
     /*
      * message.create
      * message.delete
-     * message.replied
-     * message.mentioned
+     * message.reply
+     * message.mention
      * user.updateprofile
      * friends.create
      * friends.delete
@@ -193,16 +193,29 @@ class Stream extends EventEmitter {
     if (!rawObj.event) return TYPE_EVENT_GARBAGE
     if (rawObj.event === TYPE_EVENT_MESSAGE_CREATE) {
       if (rawObj.source.id !== this.user.id) {
-        // mentioned, or replied by other user
         if (rawObj.object.in_reply_to_user_id === this.user.id) {
+          // replied by other users
           return TYPE_EVENT_MESSAGE_REPLY
         } else if (rawObj.object.repost_status_id && rawObj.object.repost_user_id === this.user.id) {
+          // repost by other users
           return TYPE_EVENT_MESSAGE_REPOST
         } else {
+          // mentioned by other users
           return TYPE_EVENT_MESSAGE_MENTION
         }
       } else {
+        // generic message creation events
         return TYPE_EVENT_MESSAGE_CREATE
+      }
+    } else if (rawObj.event === TYPE_EVENT_FAV_CREATE || rawObj.event === TYPE_EVENT_FAV_DELETE) {
+      // process fav events
+      // ref https://github.com/LitoMore/fanfou-streamer/issues/2
+      if (rawObj.object.user && rawObj.object.user.id === this.user.id) {
+        // fav create or delete by current user on his own message
+        return rawObj.event
+      } else {
+        // none of above
+        return TYPE_EVENT_GARBAGE
       }
     } else {
       return rawObj.event
