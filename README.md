@@ -50,6 +50,7 @@ For the `data` structures of these events respectively please refer to the Fanfo
 - `friends.request`
 - `fav.create`
 - `fav.delete`
+- `dm.create`
 
 ## API
 

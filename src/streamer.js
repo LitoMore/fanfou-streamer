@@ -19,6 +19,7 @@ const TYPE_EVENT_MESSAGE_REPOST = 'message.repost'
 // const TYPE_EVENT_FRIENDS_REQUEST = 'friends.request'
 const TYPE_EVENT_FAV_CREATE = 'fav.create'
 const TYPE_EVENT_FAV_DELETE = 'fav.delete'
+const TYPE_EVENT_DIRECT_MESSAGE_CREATE = 'dm.create'
 
 class Stream extends EventEmitter {
   constructor (oauth, options = {}) {
@@ -189,6 +190,7 @@ class Stream extends EventEmitter {
      * friends.request
      * fav.create
      * fav.delete
+     * dm.create
      */
     if (!rawObj.event) return TYPE_EVENT_GARBAGE
     if (rawObj.event === TYPE_EVENT_MESSAGE_CREATE) {
@@ -215,6 +217,10 @@ class Stream extends EventEmitter {
         // ignore all other types of favs
         return TYPE_EVENT_GARBAGE
       }
+    } else if (rawObj.event === TYPE_EVENT_DIRECT_MESSAGE_CREATE) {
+      // create direct message event
+      if (rawObj.target && rawObj.target.id === this.user.id) return rawObj.event
+      else return TYPE_EVENT_GARBAGE
     } else {
       return rawObj.event
     }
