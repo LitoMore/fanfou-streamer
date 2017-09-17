@@ -181,6 +181,7 @@ class Stream extends EventEmitter {
         break
       case 'dm.create':
       case 'friends.create':
+      case 'friends.request':
         if (rawObj.target && rawObj.target.id === this.user.id) return rawObj.event
         break
       default:

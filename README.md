@@ -40,7 +40,6 @@ For the `data` structures of these events respectively please refer to the Fanfo
 
 ## Events
 
-- `message.create`
 - `message.delete`
 - `message.reply`
 - `message.mention`
