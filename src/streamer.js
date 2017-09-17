@@ -180,6 +180,8 @@ class Stream extends EventEmitter {
         if (rawObj.object.user && rawObj.object.user.id === this.user.id) return rawObj.event
         break
       case 'dm.create':
+      case 'friends.create':
+      case 'friends.delete':
         if (rawObj.target && rawObj.target.id === this.user.id) return rawObj.event
         break
       default:
