@@ -5,21 +5,8 @@ const request = require('request')
 
 const streamApiUser = 'http://stream.fanfou.com/1/user.json'
 const apiCredentials = 'http://api.fanfou.com/account/verify_credentials.json'
-// const requestTimeout = 5000
 
 const TYPE_EVENT_GARBAGE = 'garbage'
-const TYPE_EVENT_MESSAGE_CREATE = 'message.create'
-// const TYPE_EVENT_MESSAGE_DELETE = 'message.delete'
-const TYPE_EVENT_MESSAGE_REPLY = 'message.reply'
-const TYPE_EVENT_MESSAGE_MENTION = 'message.mention'
-const TYPE_EVENT_MESSAGE_REPOST = 'message.repost'
-// const TYPE_EVENT_USER_UPDATEPROFILE = 'user.updateprofile'
-// const TYPE_EVENT_FRIENDS_CREATE = 'friends.create'
-// const TYPE_EVENT_FRIENDS_DELETE = 'friends.delete'
-// const TYPE_EVENT_FRIENDS_REQUEST = 'friends.request'
-const TYPE_EVENT_FAV_CREATE = 'fav.create'
-const TYPE_EVENT_FAV_DELETE = 'fav.delete'
-const TYPE_EVENT_DIRECT_MESSAGE_CREATE = 'dm.create'
 
 class Stream extends EventEmitter {
   constructor (oauth, options = {}) {
@@ -179,51 +166,27 @@ class Stream extends EventEmitter {
   }
 
   getType (rawObj) {
-    /*
-     * message.create
-     * message.delete
-     * message.reply
-     * message.mention
-     * user.updateprofile
-     * friends.create
-     * friends.delete
-     * friends.request
-     * fav.create
-     * fav.delete
-     * dm.create
-     */
     if (!rawObj.event) return TYPE_EVENT_GARBAGE
-    if (rawObj.event === TYPE_EVENT_MESSAGE_CREATE) {
-      if (rawObj.source.id !== this.user.id) {
-        if (rawObj.object.in_reply_to_user_id === this.user.id) {
-          // replied by other users
-          return TYPE_EVENT_MESSAGE_REPLY
-        } else if (rawObj.object.repost_status_id && rawObj.object.repost_user_id === this.user.id) {
-          // repost by other users
-          return TYPE_EVENT_MESSAGE_REPOST
-        } else {
-          // mentioned by other users
-          return TYPE_EVENT_MESSAGE_MENTION
+    switch (rawObj.event) {
+      case 'message.create':
+        if (rawObj.source.id !== this.user.id) {
+          if (rawObj.object.in_reply_to_user_id === this.user.id) return 'message.reply'
+          else if (rawObj.object.repost_status_id && rawObj.object.repost_user_id === this.user.id) return 'message.repost'
+          else return 'message.mention'
         }
-      } else {
-        // generic message creation events
-        return TYPE_EVENT_MESSAGE_CREATE
-      }
-    } else if (rawObj.event === TYPE_EVENT_FAV_CREATE || rawObj.event === TYPE_EVENT_FAV_DELETE) {
-      if (rawObj.object.user && rawObj.object.user.id === this.user.id) {
-        // fav create/delete events on current user's message
+        break
+      case 'fav.create':
+      case 'fav.delete':
+        if (rawObj.object.user && rawObj.object.user.id === this.user.id) return rawObj.event
+        break
+      case 'dm.create':
+      case 'friends.create':
+        if (rawObj.target && rawObj.target.id === this.user.id) return rawObj.event
+        break
+      default:
         return rawObj.event
-      } else {
-        // ignore all other types of favs
-        return TYPE_EVENT_GARBAGE
-      }
-    } else if (rawObj.event === TYPE_EVENT_DIRECT_MESSAGE_CREATE) {
-      // create direct message event
-      if (rawObj.target && rawObj.target.id === this.user.id) return rawObj.event
-      else return TYPE_EVENT_GARBAGE
-    } else {
-      return rawObj.event
     }
+    return TYPE_EVENT_GARBAGE
   }
 
   _setDisconnected () {
