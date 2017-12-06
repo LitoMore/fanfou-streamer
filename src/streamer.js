@@ -33,14 +33,11 @@ class Stream extends EventEmitter {
       if (!err) {
         this.streamHandle = request(this.getReqOptions(streamApiUser, null, 'post'))
         this._addEventListners()
-      } else {
-        // console.error('failed to fectch user info', err)
       }
     })
   }
 
   stop () {
-    // console.log(`stopping streamer for ${this.user.id}`)
     this.responseHandle.destroy()
     this.responseHandle = null
     this.streamHandle.destroy()
@@ -70,7 +67,6 @@ class Stream extends EventEmitter {
   }
 
   _handleRqResponse (response) {
-    // console.log(`stream request got response for ${this.user.id}, code `, response.statusCode)
     this.responseHandle = response
     if (this.responseHandle.statusCode === 200) {
       this.isStreaming = true
@@ -78,7 +74,6 @@ class Stream extends EventEmitter {
       this.emit('connected')
     }
     this.responseHandle.setEncoding('utf8')
-    // "Im" for IncomingMessage
     this.responseHandle.on('data', this._handleImData.bind(this))
     this.responseHandle.on('aborted', this._handleImAborted.bind(this))
     this.responseHandle.on('close', this._handleImClose.bind(this))
@@ -87,7 +82,6 @@ class Stream extends EventEmitter {
   }
 
   _handleRqError (args) {
-    // console.error(`RQ error for ${this.user.id}`, args)
     this._setDisconnected()
   }
 
@@ -95,11 +89,9 @@ class Stream extends EventEmitter {
     if (this.heartbeatTimeoutHandle) clearTimeout(this.heartbeatTimeoutHandle)
     this.heartbeatTimeoutHandle = null
     this.heartbeatTimeoutHandle = setTimeout(() => {
-      // console.log(`heartbeat timed out for ${this.user.id}, stopping...`)
       this.isStreaming = false
       this.stop()
       if (this.autoReconnect === true) {
-        // console.log(`auto reconnecting for ${this.user.id}...`)
         this.start()
       }
     }, this.heartbeatTimeoutDuration)
@@ -108,8 +100,6 @@ class Stream extends EventEmitter {
   _handleImData (chunk) {
     this.chunk += chunk.toString('utf8')
     if (this.chunk === '\r\n') {
-      // console.log(`heartbeat for ${this.user.id}`, new Date())
-      // normal interval is 20s
       this.renewHeartbeatTimeout()
       this.emit('heartbeat')
       return false
@@ -122,10 +112,8 @@ class Stream extends EventEmitter {
         try {
           let rawObj = JSON.parse(json)
           let type = this.getType(rawObj)
-          // console.log(`new event for ${this.user.id}, type `, type, rawObj.object.text)
           this.emit(type, rawObj)
         } catch (e) {
-          // console.log(`new garbaged for ${this.user.id}, the cause was `, e.toString(), json)
           this.emit('garbage', this.chunk)
         }
         this.chunk = ''
