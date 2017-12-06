@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/LitoMore/fanfou-streamer#readme",
   "dependencies": {
+    "he": "^1.1.1",
     "request": "^2.81.0"
   },
   "devDependencies": {

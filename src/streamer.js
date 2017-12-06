@@ -2,6 +2,7 @@
 
 const {EventEmitter} = require('events')
 const request = require('request')
+const he = require('he')
 
 const streamApiUser = 'http://stream.fanfou.com/1/user.json'
 const apiCredentials = 'http://api.fanfou.com/account/verify_credentials.json'
@@ -157,6 +158,7 @@ class Stream extends EventEmitter {
     if (!rawObj.event) return TYPE_EVENT_GARBAGE
     switch (rawObj.event) {
       case 'message.create':
+        rawObj.object.text = he.decode(rawObj.object.text)
         if (rawObj.source.id !== this.user.id) {
           if (rawObj.object.in_reply_to_user_id === this.user.id) return 'message.reply'
           else if (rawObj.object.repost_status_id && rawObj.object.repost_user_id === this.user.id) return 'message.repost'
@@ -165,6 +167,7 @@ class Stream extends EventEmitter {
         break
       case 'fav.create':
       case 'fav.delete':
+        rawObj.object.text = he.decode(rawObj.object.text)
         if (rawObj.object.user && rawObj.object.user.id === this.user.id) return rawObj.event
         break
       case 'dm.create':
