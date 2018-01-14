@@ -77,6 +77,11 @@ streamer.on('message.reply', data => {
 - [maofan-apn](https://github.com/LitoMore/maofan-apn) - APN service for Maofan
 - [fanfou-desktop-notifier](https://github.com/LitoMore/fanfou-desktop-notifier) - Fanfou notifier for desktop
 
+## Maintainer
+
+- [LitoMore](https://github.com/LitoMore)
+- [mogita](https://github.com/mogita)
+
 ## License
 
 MIT © [LitoMore](https://github.com/LitoMore)
