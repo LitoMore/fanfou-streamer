@@ -1,6 +1,6 @@
 'use strict'
 
-const {EventEmitter} = require('events')
+const { EventEmitter } = require('events')
 const request = require('request')
 const he = require('he')
 
